@@ -11,9 +11,11 @@ import os
 
 # PyQt6
 IMGE = {".png", ".jpg", ".jpeg",".webp"}
+VIDE = {".mp4", ".mkv", ".webm", ".mov", ".avi"}
 THS = QSize(240, 135)
 CrdW = 250
 
+#Thumbnail Cards
 class TC(QFrame):
     def __init__(self, imgp):
         super().__init__()
@@ -25,12 +27,12 @@ class TC(QFrame):
             QFrame {
                 background:transparent;
             }
-            Qlabel#ttl {
+            Qlabel#title {
                 color:#33739d;
                 font-size: 14px;
                 font-weight: bold;
                 }
-            Qlabel#thmbnl {
+            Qlabel#thumbnail {
                 background:#f3f3f3;
                 border-radius: 5px;
                 }
@@ -69,6 +71,192 @@ class TC(QFrame):
             Qt.TransformationMode.SmoothTransformation,
         )
         self.thmbnl.setPixmap(scld)
+    
+    clcked = pyqtSignal(str)
+
+    def mousePressEvent(self,event):
+        self.clcked.emit(self.imgp)
+
+
+class VidWindow(QWidget):
+    def __init__(self,player,aud):
+        super().__init__()
+        self.player = player
+        self.aud = aud
+        self.vol = 0.5
+
+        self.vid = QVideoWidget()
+
+        self.cvw = QWidget()
+        self.cvw.setFixedHeight(58)
+        self.cvw.setStyleSheet("""
+        QWidget {
+            background: rgba(0, 0, 0, 160);   
+            color: #f3f3f3       
+        }
+        """)
+
+
+        mvl = QVBoxLayout(self.cvw)
+        # Timing Row
+        thvl = QHBoxLayout()
+        # Button row
+        hvl = QHBoxLayout()
+
+        mvl.setContentsMargins(8,2,8,2)
+        mvl.setSpacing(2)
+        thvl.setContentsMargins(0,0,0,0)
+        thvl.setSpacing(6)
+        hvl.setContentsMargins(0,0,0,0)
+        thvl.setSpacing(6)
+
+        self.curtim = QLabel("0:00")
+        self.curtim.setMinimumSize(80,0)
+        self.curtim.setFixedWidth(55)
+        self.curtim.setAlignment(Qt.AlignmentFlag.AlignCenter)
+        thvl.addWidget(self.curtim)
+
+        self.timslid = QSlider(Qt.Orientation.Horizontal)
+        self.timslid.setStyleSheet("""
+            QSlider::groove:horizontal {
+                height: 4px;
+                background: #444;
+                border-radius: 2px;
+            }
+
+            QSlider::handle:horizontal {
+                width: 10px;
+                height: 10px;
+                margin: -4px 0;
+                background: #f3f3f3;
+                border-radius: 5px;
+            }
+
+            QSlider::sub-page:horizontal {
+            background: #33739d;
+            border-radius: 2px;
+            }
+        """)
+        self.timslid.setFixedHeight(14)
+        self.timslid.setSizePolicy(
+            QSizePolicy.Policy.Expanding,
+            QSizePolicy.Policy.Fixed
+        )
+        thvl.addWidget(self.timslid)
+
+        self.ttltim = QLabel("0:00")
+        self.ttltim.setMinimumSize(80,0)
+        self.ttltim.setFixedWidth(55)
+        self.ttltim.setAlignment(Qt.AlignmentFlag.AlignCenter)
+        thvl.addWidget(self.ttltim)
+        
+        self.player.positionChanged.connect(self.vpos)
+        self.player.durationChanged.connect(self.vdur)
+        self.timslid.sliderMoved.connect(self.player.setPosition)
+
+        self.pbt = QPushButton("Pause")
+        self.pbt.clicked.connect(self.tp)
+        self.pbt.setFixedHeight(22)
+
+        self.vl = QLabel("50%")
+        self.vl.setFixedHeight(22)
+
+        hvl.addStretch()
+        hvl.addWidget(self.pbt)
+        hvl.addStretch()
+        hvl.addWidget(self.vl)
+
+        mvl.addLayout(thvl)
+        mvl.addLayout(hvl)        
+
+        lyt = QVBoxLayout(self)
+        lyt.setContentsMargins(0,0,0,0)
+        lyt.setSpacing(0)
+        lyt.addWidget(self.vid)
+        lyt.addWidget(self.cvw)
+
+    def fmt(self,ms):
+        sectim = ms // 1000
+        mins = sectim // 60
+        secs = sectim % 60
+        return f"{mins}:{secs:02d}"
+    
+    def vpos(self, pos):
+        self.timslid.blockSignals(True)
+        self.timslid.setValue(pos)
+        self.timslid.blockSignals(False)
+        self.curtim.setText(self.fmt(pos))
+        self.ttltim.setText(self.fmt(self.player.duration()))
+
+    def vdur(self, dur):
+        self.timslid.setRange(0,dur)
+        self.ttltim.setText(self.fmt(dur))
+        
+    
+    def efs(self):
+        self.cvw.hide()
+        self.showFullScreen()
+
+    def mouseMoveEvent(self, event):
+        nb = event.position().y() > self.height() -140
+
+        if nb:
+            self.cvw.show()
+            self.ht.start()
+        super().mouseMoveEvent(event)
+
+
+    def keyPressEvent(self, event):
+        if event.key() == Qt.Key.Key_Escape:
+            if self.isFullScreen():
+                self.showNormal()
+                self.cvw.show()
+            else:
+                self.player.stop()
+                self.close()
+
+        elif event.key() == Qt.Key.Key_Space:
+            self.tp()
+
+        elif event.key() == Qt.Key.Key_Up or event.key() == Qt.Key.Key_Down:
+            if event.key() == Qt.Key.Key_Up:
+                self.vol = round(min(self.vol + 0.05, 1.0), 2)
+                print(self.vol)
+            else:
+                self.vol = round(max(self.vol - 0.05,0.0),2)
+                print(self.vol)
+            self.aud.setVolume(self.vol)
+            self.vl.setText(f"{int(self.vol * 100)}%")
+
+        elif event.key() == Qt.Key.Key_Right or event.key() == Qt.Key.Key_Left:
+            if event.key() == Qt.Key.Key_Right:
+                npos = self.player.position() + 10000
+            else:
+                npos = self.player.position() - 10000
+            self.player.setPosition(max(npos, 0))
+        elif event.key() == Qt.Key.Key_M:
+            if self.aud.isMuted() == True:
+                self.aud.setMuted(False)
+            else:
+                self.aud.setMuted(True)
+
+        elif event.key() == Qt.Key.Key_F:
+            if self.isFullScreen():
+                self.showNormal()
+                self.cvw.show()
+            else:
+                self.cvw.hide()
+                self.showFullScreen()
+        else:
+            super().keyPressEvent(event)
+
+    def tp(self):
+        if self.player.playbackState() == QMediaPlayer.PlaybackState.PlayingState:
+            self.player.pause()
+            self.pbt.setText("PLAY")
+        else:
+            self.player.play()
+            self.pbt.setText("PAUSE")
 
 
 class MW(QMainWindow):
@@ -112,8 +300,12 @@ class MW(QMainWindow):
         # Toolbar
         #self.tlb()
         
+
         #Layout / UI     
         self.ui()
+        #Media player
+        self.medp()
+        self.aud.setVolume(0.5)
         #Select folder
         self.lodfold()
         self.ppg()
@@ -173,7 +365,7 @@ class MW(QMainWindow):
         hl.addWidget(self.fsl)
         #hl.addStretch()
         hl.addWidget(self.sinput)
-                
+        
         # Scroll bar
         self.sa = QScrollArea()
         self.sa.setWidgetResizable(True)
@@ -190,9 +382,14 @@ class MW(QMainWindow):
         # Add horizontal layout to main layout and add scroll bar and set central widget to central widget
         ml.addLayout(hl)
         ml.addWidget(self.sa)
-        
         self.setCentralWidget(cw)
 
+    def medp(self):
+        self.plyr = QMediaPlayer()
+        self.aud = QAudioOutput()
+        self.vid = VidWindow(self.plyr,self.aud)
+        self.plyr.setAudioOutput(self.aud)
+        self.plyr.setVideoOutput(self.vid.vid)
 
     def slf(self):
         fld = QFileDialog.getExistingDirectory(self,"select image directory", self.folderloc)
@@ -283,6 +480,7 @@ class MW(QMainWindow):
             if wid:
                 wid.deleteLater()
         st = self.sinput.text().strip().lower()
+        
         vi = [
             p
             for p in self.imgps
@@ -293,7 +491,9 @@ class MW(QMainWindow):
         for index, imgp in enumerate(vi):
             r = index // cols
             col = index % cols
-            self.gl.addWidget(TC(imgp), r, col)
+            crd = TC(imgp)
+            crd.clcked.connect(self.pvfi)
+            self.gl.addWidget(crd, r, col)
 
         self.gl.setRowStretch((len(vi)//cols) +1, 1)
         self.gl.setColumnStretch(cols,1)
@@ -307,6 +507,21 @@ class MW(QMainWindow):
         super().resizeEvent(event)
         if hasattr(self,"gl"):
             self.ppg()
+
+    def pvfi(self, imgp):
+        bse = os.path.splitext(imgp)[0]
+
+        for ext in VIDE:
+            vp = bse + ext
+            if os.path.exists(vp):
+                self.playvid(vp)
+                return
+        self.statusBar().showMessage("No Matching Video :(")
+    
+    def playvid(self,vp):
+        self.plyr.setSource(QUrl.fromLocalFile(vp))
+        self.vid.efs()
+        self.plyr.play()
 
 
 
