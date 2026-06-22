@@ -2,11 +2,11 @@
 An offline media player that supports .description files and displays thumbnails
 
 Requirements:
-Python
-Pillow Library
-PyQt6
-PyQtgraph
+Python & PyQt6
 
 Software used:
-Visual Studio Code
-Qt Creator
+Visual Studio Code (Coding all features),
+Qt Creator (See ui options)
+
+AI USE:
+AI has been used to find errors (generally caused by my own stupidity :D )
