@@ -10,9 +10,11 @@ import os
 # SETTINGS
 
 # PyQt6
+THMBNLW = 240
+THMBNLH = 135
 IMGE = {".png", ".jpg", ".jpeg",".webp"}
 VIDE = {".mp4", ".mkv", ".webm", ".mov", ".avi"}
-THS = QSize(240, 135)
+THS = QSize(THMBNLW, THMBNLH)
 CrdW = 250
 
 #Thumbnail Cards
@@ -79,6 +81,34 @@ class TC(QFrame):
         self.clcked.emit(self.imgp)
 
 
+# self.tggle = QToggle
+#self.tggle.toggled.connect(def)
+class QToggle(QCheckBox):
+    def __init__(self, parent=None):
+        super().__init__(parent)
+        self.setCursor(Qt.CursorShape.PointingHandCursor)
+        self.setFixedSize(46, 24)
+    
+    def mousePressEvent(self, event):
+        if event.button() == Qt.MouseButton.LeftButton:
+            self.setChecked(not self.isChecked())
+            event.accept()
+        else:
+            super().mousePressEvent(event)
+
+    def paintEvent(self, event):
+        pntr = QPainter(self)
+        pntr.setRenderHint(QPainter.RenderHint.Antialiasing)
+
+        bg = QColor("#33739d") if self.isChecked() else QColor("#444")
+        pntr.setBrush(bg)
+        pntr.setPen(Qt.PenStyle.NoPen)
+        pntr.drawRoundedRect(0, 0, 46, 24, 12, 12)
+
+        kx = 24 if self.isChecked() else 2
+        pntr.setBrush(QColor("#f3f3f3"))
+        pntr.drawEllipse(kx, 2, 20, 20)
+
 class VidWindow(QWidget):
     def __init__(self,player,aud):
         super().__init__()
@@ -90,13 +120,8 @@ class VidWindow(QWidget):
 
         self.cvw = QWidget()
         self.cvw.setFixedHeight(58)
-        self.cvw.setStyleSheet("""
-        QWidget {
-            background: rgba(0, 0, 0, 160);   
-            color: #f3f3f3       
-        }
-        """)
 
+        # Main Vertical Layout
         self.mvl = QVBoxLayout(self.cvw)
         # Timing Row
         self.thvl = QHBoxLayout()
@@ -108,44 +133,13 @@ class VidWindow(QWidget):
         
         self.mvl.setContentsMargins(8,2,8,2)
         self.mvl.setSpacing(2)
+
         self.thvl.setContentsMargins(0,0,0,0)
         self.thvl.setSpacing(6)
         self.hvl.setContentsMargins(0,0,0,0)
-        self.thvl.setSpacing(6)
+        self.hvl.setSpacing(6)
 
-        self.curtim = QLabel("0:00")
-        self.curtim.setMinimumSize(80,0)
-        self.curtim.setFixedWidth(55)
-        self.curtim.setAlignment(Qt.AlignmentFlag.AlignCenter)
-        self.thvl.addWidget(self.curtim)
-
-        self.timslid = QSlider(Qt.Orientation.Horizontal)
-        self.timslid.setStyleSheet("""
-            QSlider::groove:horizontal {
-                height: 4px;
-                background: #444;
-                border-radius: 2px;
-            }
-
-            QSlider::handle:horizontal {
-                width: 10px;
-                height: 10px;
-                margin: -4px 0;
-                background: #f3f3f3;
-                border-radius: 5px;
-            }
-
-            QSlider::sub-page:horizontal {
-            background: #33739d;
-            border-radius: 2px;
-            }
-        """)
-        self.timslid.setFixedHeight(14)
-        self.timslid.setSizePolicy(
-            QSizePolicy.Policy.Expanding,
-            QSizePolicy.Policy.Fixed
-        )
-        self.ui()
+        self.plt()
         self.btn()
 
         self.hvl.addStretch()
@@ -180,7 +174,38 @@ class VidWindow(QWidget):
         self.pbt.setFocusPolicy(Qt.FocusPolicy.NoFocus)
 
 
-    def ui(self):
+    def plt(self):
+        self.curtim = QLabel("0:00")
+        self.curtim.setMinimumSize(80,0)
+        self.curtim.setFixedWidth(55)
+        self.curtim.setAlignment(Qt.AlignmentFlag.AlignCenter)
+        self.thvl.addWidget(self.curtim)
+
+        self.timslid = QSlider(Qt.Orientation.Horizontal)
+        self.timslid.setStyleSheet("""
+            QSlider::groove:horizontal {
+                height: 4px;
+                background: #444;
+                border-radius: 2px;
+            }
+
+            QSlider::handle:horizontal {
+                width: 10px;
+                height: 10px;
+                margin: -4px 0;
+                background: #f3f3f3;
+                border-radius: 5px;
+            }
+
+            QSlider::sub-page:horizontal {
+            background: #33739d;
+            border-radius: 2px;
+            }
+        """)
+        self.timslid.setFixedHeight(14)
+        self.timslid.setSizePolicy(
+            QSizePolicy.Policy.Expanding,
+            QSizePolicy.Policy.Fixed)
         self.thvl.addWidget(self.timslid)
 
         self.ttltim = QLabel("0:00")
@@ -255,6 +280,7 @@ class VidWindow(QWidget):
             }
         """)
 
+    # Volume slider changed
     def volc(self):
         self.vol = self.vls.sliderPosition()
         print(self.vol)
@@ -264,13 +290,14 @@ class VidWindow(QWidget):
         self.moum()
         self.vl.setText(f"{int(self.vol * 100)}%")
 
-
+    # Volume Icon to show/hide volume slider
     def vlcd(self):
         if self.vls.isHidden():
             self.vls.show()
         else:
             self.vls.hide()
 
+    # Find Time in Hours, Minutes and Seconds
     def fmt(self,ms):
         sectim = ms // 1000
         mintim = sectim // 60
@@ -278,27 +305,34 @@ class VidWindow(QWidget):
         mins = mintim % 60
         secs = sectim % 60
         if hrs >= 1:
-            return f"{hrs}:{mins:02d}:{secs:02d}"
+            return f"{hrs:02d}:{mins:02d}:{secs:02d}"
         else:
             return f"{mins:02d}:{secs:02d}"
     
+    #Video Position
     def vpos(self, pos):
+        # Setting to be changed (Changes from duration to time till done)
+        ttltim_ttorttltm = 0
         self.timslid.blockSignals(True)
         self.timslid.setValue(pos)
         self.timslid.blockSignals(False)
         self.curtim.setText(self.fmt(pos))
-        self.ttltim.setText(self.fmt(self.player.duration()))
+        if ttltim_ttorttltm == 1:
+            self.ttltim.setText("-" + self.fmt(self.player.duration() - pos))
+        else:
+            self.ttltim.setText(self.fmt(self.player.duration()))
 
+    #Sets the slider to go from vid start to finish
     def vdur(self, dur):
         self.timslid.setRange(0,dur)
-        self.ttltim.setText(self.fmt(dur))
-        
-    
+
+    # Hide the control panel and goes into full screen    
     def efs(self):
         self.cvw.hide()
         self.showFullScreen()
 
     def keyPressEvent(self, event):
+        # If escape pressed, exit fullscreen or close it
         if event.key() == Qt.Key.Key_Escape:
             if self.isFullScreen():
                 self.showNormal()
@@ -307,9 +341,11 @@ class VidWindow(QWidget):
                 self.player.stop()
                 self.close()
 
+        # Toggle pause when space
         elif event.key() == Qt.Key.Key_Space:
             self.tp()
 
+        # Change volume ( rounded to prevent X.00000000001)
         elif event.key() == Qt.Key.Key_Up or event.key() == Qt.Key.Key_Down:
             if event.key() == Qt.Key.Key_Up:
                 self.vol = round(min(self.vol + 0.05, 1.0), 2)
@@ -320,12 +356,15 @@ class VidWindow(QWidget):
             self.moum()
             self.vl.setText(f"{int(self.vol * 100)}%")
 
+        # Skippa Skippa forwards or backwards
         elif event.key() == Qt.Key.Key_Right or event.key() == Qt.Key.Key_Left:
             if event.key() == Qt.Key.Key_Right:
                 npos = self.player.position() + 10000
             else:
                 npos = self.player.position() - 10000
             self.player.setPosition(max(npos, 0))
+
+        # Mute
         elif event.key() == Qt.Key.Key_M:
             if self.aud.isMuted() == True:
                 self.aud.setMuted(False)
@@ -336,6 +375,7 @@ class VidWindow(QWidget):
             else:
                 self.vlb.setIcon(self.style().standardIcon(QStyle.StandardPixmap.SP_MediaVolume))
 
+        # Toggle Fullscreen
         elif event.key() == Qt.Key.Key_F:
             if self.isFullScreen():
                 self.showNormal()
@@ -343,9 +383,11 @@ class VidWindow(QWidget):
             else:
                 self.cvw.hide()
                 self.showFullScreen()
+
         else:
             super().keyPressEvent(event)
 
+    # Toggle playback
     def tp(self):
         if self.player.playbackState() == QMediaPlayer.PlaybackState.PlayingState:
             self.player.pause()
@@ -355,19 +397,65 @@ class VidWindow(QWidget):
             icn = self.style().standardIcon(QStyle.StandardPixmap.SP_MediaPause)
         self.pbt.setIcon(icn)
 
+    #Skippa Skippa
     def sf(self):
         npos = self.player.position() + 10000
         self.player.setPosition(max(npos, 0))
     
+    # Rewind backwards
     def sb(self):
         npos = self.player.position() - 10000
         self.player.setPosition(max(npos, 0))
 
+    # To diplay muted or not
     def moum(self):
         if self.vol == 0:
             self.vlb.setIcon(self.style().standardIcon(QStyle.StandardPixmap.SP_MediaVolumeMuted))
         else:
             self.vlb.setIcon(self.style().standardIcon(QStyle.StandardPixmap.SP_MediaVolume))
+
+# HLP SETTINGS WINDOW
+class STTNG(QWidget):
+    def __init__(self, main_window):
+        super().__init__()
+        self.setGeometry(500,250,900,600)
+        self.mw = main_window
+        cw = QWidget(self)
+        VL = QVBoxLayout(cw)
+        STNGLBL = QLabel("SETTINGS")
+
+        # General eg.colour
+        GL = QVBoxLayout()
+        T1= QHBoxLayout()
+        LM = QToggle()
+        LM.toggled.connect(self.slm and self.mw.sl)
+        LML = QLabel("Toggle Light Mode")
+        T1.addWidget(LM)
+        T1.addWidget(LML)
+        GL.addLayout(T1)
+
+        VL.addWidget(STNGLBL)
+        VL.addLayout(GL)
+    
+    def slm(self, checked):
+        if checked:
+            print("Light Mode set")
+            self.setStyleSheet("""
+                QWidget {
+                    background: #f3f3f3;
+                    color: #111111;
+                }
+""")
+        else:
+            print("Dark Mode")
+            self.setStyleSheet("""
+                QWidget {
+                background: #0f0f0f;
+                color: #f3f3f3;
+            }
+""")
+        
+
 
 class MW(QMainWindow):
     def __init__(self):
@@ -378,7 +466,7 @@ class MW(QMainWindow):
         self.settings = QSettings("OfflineYTPlayer", "MediaPlayer")
         self.imgps = []
 
-        self.setWindowTitle("Media Player")
+        self.setWindowTitle("Media Library")
         self.setGeometry(100, 100, 900, 600)
         self.setStatusBar(QStatusBar(self))
 
@@ -413,9 +501,56 @@ class MW(QMainWindow):
         self.aud.setVolume(0.5)
         #Select folder
         self.lodfold()
+        # Propagate previews
         self.ppg()
 
- 
+    def sl(self, checked):
+        if checked:
+            self.setStyleSheet("""
+                QMainWindow, QWidget {
+                    background: #f3f3f3;
+                    color: #111111;
+                }
+
+                QLineEdit, QComboBox {
+                    background: #ffffff;
+                    border: 1px solid #c7c7c7;
+                    border-radius: 5px;
+                    color: #111111;
+                    padding: 3px 6px;
+            }
+
+            QPushButton {
+                background: #e5e5e5;
+                border: 1px solid #b8b8b8;
+                border-radius: 5px;
+                color: #111111;
+                padding: 3px 6px;
+            }
+        """)
+        else:
+            self.setStyleSheet("""
+            QMainWindow, QWidget {
+                background: #0f0f0f;
+                color: #f3f3f3;
+            }
+
+            QLineEdit, QComboBox {
+                background: #202020;
+                border: 1px solid #3a3a3a;
+                border-radius: 5px;
+                color: #f3f3f3;
+                padding: 3px 6px;
+            }
+
+            QPushButton {
+                background: #2a2a2a;
+                border: 1px solid #3a3a3a;
+                border-radius: 5px;
+                color: #f3f3f3;
+                padding: 3px 6px;
+            }
+        """)
         
     def ui(self):
 
@@ -424,9 +559,13 @@ class MW(QMainWindow):
         pl = QHBoxLayout(cw)
         #Vertical Popout Layout
         plv = QVBoxLayout()
+        # Vertical Popout widget
         self.vpw = QWidget()
+        # Vertical popout layout for content
         vpl = QVBoxLayout(self.vpw)
+        # Folders
         fld = QHBoxLayout()
+        # Main Layout
         ml = QVBoxLayout()
         hl = QHBoxLayout()
 
@@ -481,6 +620,12 @@ class MW(QMainWindow):
         rf.setFixedSize(125,35)
         rf.clicked.connect(self.remfold)
 
+        # Settings Button
+        seb = QPushButton("SETTINGS")
+        seb.setFixedHeight(35)
+        seb.clicked.connect(self.opnsttng)
+        vpl.addWidget(seb)
+
         #Exit button
         eb = QPushButton("EXIT")
         eb.setFixedHeight(35)
@@ -527,6 +672,14 @@ class MW(QMainWindow):
         self.vid = VidWindow(self.plyr,self.aud)
         self.plyr.setAudioOutput(self.aud)
         self.plyr.setVideoOutput(self.vid.vid)
+
+    def opnsttng(self):
+        if not hasattr(self, "sttng"):
+            self.sttng = STTNG(self)
+        self.sttng.show()
+        self.sttng.raise_()
+        self.sttng.activateWindow()
+
 
     def slf(self):
         fld = QFileDialog.getExistingDirectory(self,"select image directory", self.folderloc)
