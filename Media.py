@@ -24,20 +24,6 @@ class TC(QFrame):
         self.imgp = imgp
         self.setFixedWidth(CrdW)
         self.setSizePolicy(QSizePolicy.Policy.Fixed, QSizePolicy.Policy.Fixed)
-        self.setStyleSheet("""
-            QFrame {
-                background:transparent;
-            }
-            Qlabel#title {
-                color:#33739d;
-                font-size: 14px;
-                font-weight: bold;
-                }
-            Qlabel#thumbnail {
-                background:#f3f3f3;
-                border-radius: 5px;
-                }
-            """)
         
         lyt = QVBoxLayout(self)
         lyt.setContentsMargins(10, 10, 10, 15)
@@ -110,8 +96,9 @@ class QToggle(QCheckBox):
         pntr.drawEllipse(kx, 2, 20, 20)
 
 class VidWindow(QWidget):
-    def __init__(self,player,aud):
+    def __init__(self,player,aud,main_window):
         super().__init__()
+        self.mw = main_window
         self.player = player
         self.aud = aud
         self.vol = 0.5
@@ -182,26 +169,7 @@ class VidWindow(QWidget):
         self.thvl.addWidget(self.curtim)
 
         self.timslid = QSlider(Qt.Orientation.Horizontal)
-        self.timslid.setStyleSheet("""
-            QSlider::groove:horizontal {
-                height: 4px;
-                background: #444;
-                border-radius: 2px;
-            }
 
-            QSlider::handle:horizontal {
-                width: 10px;
-                height: 10px;
-                margin: -4px 0;
-                background: #f3f3f3;
-                border-radius: 5px;
-            }
-
-            QSlider::sub-page:horizontal {
-            background: #33739d;
-            border-radius: 2px;
-            }
-        """)
         self.timslid.setFixedHeight(14)
         self.timslid.setSizePolicy(
             QSizePolicy.Policy.Expanding,
@@ -259,26 +227,6 @@ class VidWindow(QWidget):
         self.vls.hide()
         self.vls.setRange(0,100)
         self.vls.sliderMoved.connect(self.volc)
-        self.vls.setStyleSheet("""
-            QSlider::groove:horizontal {
-                height: 4px;
-                background: #444;
-                border-radius: 2px;
-            }
-
-            QSlider::handle:horizontal {
-                width: 10px;
-                height: 10px;
-                margin: -4px 0;
-                background: #f3f3f3;
-                border-radius: 5px;
-            }
-
-            QSlider::sub-page:horizontal {
-            background: #33739d;
-            border-radius: 2px;
-            }
-        """)
 
     # Volume slider changed
     def volc(self):
@@ -312,7 +260,7 @@ class VidWindow(QWidget):
     #Video Position
     def vpos(self, pos):
         # Setting to be changed (Changes from duration to time till done)
-        ttltim_ttorttltm = 0
+        ttltim_ttorttltm = self.mw.DOTTD
         self.timslid.blockSignals(True)
         self.timslid.setValue(pos)
         self.timslid.blockSignals(False)
@@ -413,55 +361,6 @@ class VidWindow(QWidget):
             self.vlb.setIcon(self.style().standardIcon(QStyle.StandardPixmap.SP_MediaVolumeMuted))
         else:
             self.vlb.setIcon(self.style().standardIcon(QStyle.StandardPixmap.SP_MediaVolume))
-    
-    #Change Light mode or darkmode
-    def sl(self, checked):
-        if checked:
-            self.setStyleSheet("""
-                QMainWindow, QWidget {
-                    background: #f3f3f3;
-                    color: #111111;
-                }
-
-                QLineEdit, QComboBox {
-                    background: #ffffff;
-                    border: 1px solid #c7c7c7;
-                    border-radius: 5px;
-                    color: #111111;
-                    padding: 3px 6px;
-            }
-
-            QPushButton {
-                background: #e5e5e5;
-                border: 1px solid #b8b8b8;
-                border-radius: 5px;
-                color: #111111;
-                padding: 3px 6px;
-            }
-        """)
-        else:
-            self.setStyleSheet("""
-            QMainWindow, QWidget {
-                background: #0f0f0f;
-                color: #f3f3f3;
-            }
-
-            QLineEdit, QComboBox {
-                background: #202020;
-                border: 1px solid #3a3a3a;
-                border-radius: 5px;
-                color: #f3f3f3;
-                padding: 3px 6px;
-            }
-
-            QPushButton {
-                background: #2a2a2a;
-                border: 1px solid #3a3a3a;
-                border-radius: 5px;
-                color: #f3f3f3;
-                padding: 3px 6px;
-            }
-        """)
 
 # HLP SETTINGS WINDOW
 class STTNG(QWidget):
@@ -475,22 +374,45 @@ class STTNG(QWidget):
 
         # General eg.colour
         GL = QVBoxLayout()
+        GLL = QLabel("General")
         T1= QHBoxLayout()
-        LM = QToggle()
-        
-        LM.toggled.connect(self.slm)
+        self.LM = QToggle()
+        self.LM.setChecked(self.mw.limod)
+        self.LM.toggled.connect(self.slm)
         LML = QLabel("Toggle Light Mode")
-        T1.addWidget(LM)
+
+        T1.addWidget(self.LM)
         T1.addWidget(LML)
+        GL.addWidget(GLL)
         GL.addLayout(T1)
+
+        #Video Player
+        VDL = QVBoxLayout()
+        T2 = QHBoxLayout()
+        VDLL = QLabel("Video Player")
+        self.ttd = QToggle()
+        self.ttd.setChecked(self.mw.DOTTD)
+        self.ttd.toggled.connect(self.ttdc)
+        TTDL = QLabel("Duration or Time till done")
+
+        T2.addWidget(self.ttd)
+        T2.addWidget(TTDL)
+        VDL.addWidget(VDLL)
+        VDL.addLayout(T2)
 
         VL.addWidget(STNGLBL)
         VL.addLayout(GL)
+        VL.addSpacing(6)
+        VL.addLayout(VDL)
     
+    # Change LM.toggled.connect(self.slm) to LM.toggled.connect(self.mw.sl()) when done and delete slm
     def slm(self, checked):
         print("Light Mode set" if checked else "Dark Mode")
         self.mw.sl(checked)
-        
+
+    def ttdc(self, checked):
+        print("TTD" if checked else "DUR")    
+        self.mw.ttdd(checked)
 
 
 class MW(QMainWindow):
@@ -500,6 +422,8 @@ class MW(QMainWindow):
         self.folderloc = ""
         self.lfolder = []
         self.settings = QSettings("OfflineYTPlayer", "MediaPlayer")
+        self.limod = self.settings.value("light_mode", False, type=bool)
+        self.DOTTD = self.settings.value("Duration_OR_TIME_TILL_DONE", False, type=bool)
         self.imgps = []
 
         self.setWindowTitle("Media Library")
@@ -526,11 +450,42 @@ class MW(QMainWindow):
                 color: #f3f3f3;
                 padding:3px,6px;
             }
+            QSlider::groove:horizontal {
+                height: 4px;
+                background: #444;
+                border-radius: 2px;
+            }
+
+            QSlider::handle:horizontal {
+                width: 10px;
+                height: 10px;
+                margin: -4px 0;
+                background: #f3f3f3;
+                border-radius: 5px;
+            }
+
+            QSlider::sub-page:horizontal {
+            background: #33739d;
+            border-radius: 2px;
+            }
+            QFrame {
+                background:transparent;
+            }
+            Qlabel#title {
+                color:#33739d;
+                font-size: 14px;
+                font-weight: bold;
+                }
+            Qlabel#thumbnail {
+                background:#f3f3f3;
+                border-radius: 5px;
+                }
 """)
         
 
         #Layout / UI     
         self.ui()
+        self.sl(self.limod)
         #Media player
         self.medp()
         self.aud.setVolume(0.5)
@@ -538,8 +493,10 @@ class MW(QMainWindow):
         self.lodfold()
         # Propagate previews
         self.ppg()
-        
+
     def sl(self, checked):
+        self.limod = checked
+        self.settings.setValue("light_mode", checked)
         if checked:
             print("checked")
             QApplication.instance().setStyleSheet("""
@@ -563,6 +520,36 @@ class MW(QMainWindow):
                 color: #111111;
                 padding: 3px 6px;
             }
+            QSlider::groove:horizontal {
+                height: 4px;
+                background: #444;
+                border-radius: 2px;
+            }
+
+            QSlider::handle:horizontal {
+                width: 10px;
+                height: 10px;
+                margin: -4px 0;
+                background: #33739d;
+                border-radius: 5px;
+            }
+
+            QSlider::sub-page:horizontal {
+            background: #33739d;
+            border-radius: 2px;
+            }
+            QFrame {
+                background:transparent;
+            }
+            Qlabel#title {
+                color:#33739d;
+                font-size: 14px;
+                font-weight: bold;
+                }
+            Qlabel#thumbnail {
+                background:#f3f3f3;
+                border-radius: 5px;
+                }
         """)
         else:
             print("else")
@@ -587,7 +574,29 @@ class MW(QMainWindow):
                 color: #f3f3f3;
                 padding: 3px 6px;
             }
+            QSlider::groove:horizontal {
+                height: 4px;
+                background: #444;
+                border-radius: 2px;
+            }
+
+            QSlider::handle:horizontal {
+                width: 10px;
+                height: 10px;
+                margin: -4px 0;
+                background: #f3f3f3;
+                border-radius: 5px;
+            }
+
+            QSlider::sub-page:horizontal {
+            background: #33739d;
+            border-radius: 2px;
+            }
         """)
+    
+    def ttdd(self,checked):
+        self.DOTTD = checked
+        self.settings.setValue("Duration_OR_TIME_TILL_DONE", checked)
 
     def ui(self):
 
@@ -706,7 +715,7 @@ class MW(QMainWindow):
     def medp(self):
         self.plyr = QMediaPlayer()
         self.aud = QAudioOutput()
-        self.vid = VidWindow(self.plyr,self.aud)
+        self.vid = VidWindow(self.plyr,self.aud,self)
         self.plyr.setAudioOutput(self.aud)
         self.plyr.setVideoOutput(self.vid.vid)
 
