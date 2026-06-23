@@ -413,97 +413,8 @@ class VidWindow(QWidget):
             self.vlb.setIcon(self.style().standardIcon(QStyle.StandardPixmap.SP_MediaVolumeMuted))
         else:
             self.vlb.setIcon(self.style().standardIcon(QStyle.StandardPixmap.SP_MediaVolume))
-
-# HLP SETTINGS WINDOW
-class STTNG(QWidget):
-    def __init__(self, main_window):
-        super().__init__()
-        self.setGeometry(500,250,900,600)
-        self.mw = main_window
-        cw = QWidget(self)
-        VL = QVBoxLayout(cw)
-        STNGLBL = QLabel("SETTINGS")
-
-        # General eg.colour
-        GL = QVBoxLayout()
-        T1= QHBoxLayout()
-        LM = QToggle()
-        LM.toggled.connect(self.slm and self.mw.sl)
-        LML = QLabel("Toggle Light Mode")
-        T1.addWidget(LM)
-        T1.addWidget(LML)
-        GL.addLayout(T1)
-
-        VL.addWidget(STNGLBL)
-        VL.addLayout(GL)
     
-    def slm(self, checked):
-        if checked:
-            print("Light Mode set")
-            self.setStyleSheet("""
-                QWidget {
-                    background: #f3f3f3;
-                    color: #111111;
-                }
-""")
-        else:
-            print("Dark Mode")
-            self.setStyleSheet("""
-                QWidget {
-                background: #0f0f0f;
-                color: #f3f3f3;
-            }
-""")
-        
-
-
-class MW(QMainWindow):
-    def __init__(self):
-        super().__init__()
-
-        self.folderloc = ""
-        self.lfolder = []
-        self.settings = QSettings("OfflineYTPlayer", "MediaPlayer")
-        self.imgps = []
-
-        self.setWindowTitle("Media Library")
-        self.setGeometry(100, 100, 900, 600)
-        self.setStatusBar(QStatusBar(self))
-
-        self.setStyleSheet(
-            """
-            QmainWindow, QWidget{
-                background: #0f0f0f;
-                color: #f3f3f3;
-            }           
-            QLineEdit, QComboBox{
-                background: #202020;
-                border:1px solid #3a3a3a;
-                border-radius:5px;
-                color: #f3f3f3;
-                padding:3px,6px;
-            }
-            QPushButton{
-                background:2a2a2a;
-                border:1px solid #3a3a3a;
-                border-radius:5px;
-                color: #f3f3f3;
-                padding:3px,6px;
-            }
-"""
-        )
-        
-
-        #Layout / UI     
-        self.ui()
-        #Media player
-        self.medp()
-        self.aud.setVolume(0.5)
-        #Select folder
-        self.lodfold()
-        # Propagate previews
-        self.ppg()
-
+    #Change Light mode or darkmode
     def sl(self, checked):
         if checked:
             self.setStyleSheet("""
@@ -551,7 +462,133 @@ class MW(QMainWindow):
                 padding: 3px 6px;
             }
         """)
+
+# HLP SETTINGS WINDOW
+class STTNG(QWidget):
+    def __init__(self, main_window):
+        super().__init__()
+        self.setGeometry(500,250,900,600)
+        self.mw = main_window
+        cw = QWidget(self)
+        VL = QVBoxLayout(cw)
+        STNGLBL = QLabel("SETTINGS")
+
+        # General eg.colour
+        GL = QVBoxLayout()
+        T1= QHBoxLayout()
+        LM = QToggle()
         
+        LM.toggled.connect(self.slm)
+        LML = QLabel("Toggle Light Mode")
+        T1.addWidget(LM)
+        T1.addWidget(LML)
+        GL.addLayout(T1)
+
+        VL.addWidget(STNGLBL)
+        VL.addLayout(GL)
+    
+    def slm(self, checked):
+        print("Light Mode set" if checked else "Dark Mode")
+        self.mw.sl(checked)
+        
+
+
+class MW(QMainWindow):
+    def __init__(self):
+        super().__init__()
+
+        self.folderloc = ""
+        self.lfolder = []
+        self.settings = QSettings("OfflineYTPlayer", "MediaPlayer")
+        self.imgps = []
+
+        self.setWindowTitle("Media Library")
+        self.setGeometry(100, 100, 900, 600)
+        self.setStatusBar(QStatusBar(self))
+
+        QApplication.instance().setStyleSheet(
+            """
+            QmainWindow, QWidget{
+                background: #0f0f0f;
+                color: #f3f3f3;
+            }           
+            QLineEdit, QComboBox{
+                background: #202020;
+                border:1px solid #3a3a3a;
+                border-radius:5px;
+                color: #f3f3f3;
+                padding:3px,6px;
+            }
+            QPushButton{
+                background:2a2a2a;
+                border:1px solid #3a3a3a;
+                border-radius:5px;
+                color: #f3f3f3;
+                padding:3px,6px;
+            }
+""")
+        
+
+        #Layout / UI     
+        self.ui()
+        #Media player
+        self.medp()
+        self.aud.setVolume(0.5)
+        #Select folder
+        self.lodfold()
+        # Propagate previews
+        self.ppg()
+        
+    def sl(self, checked):
+        if checked:
+            print("checked")
+            QApplication.instance().setStyleSheet("""
+                QMainWindow, QWidget {
+                    background: #f3f3f3;
+                    color: #111111;
+                }
+
+                QLineEdit, QComboBox {
+                    background: #ffffff;
+                    border: 1px solid #c7c7c7;
+                    border-radius: 5px;
+                    color: #111111;
+                    padding: 3px 6px;
+            }
+
+            QPushButton {
+                background: #e5e5e5;
+                border: 1px solid #b8b8b8;
+                border-radius: 5px;
+                color: #111111;
+                padding: 3px 6px;
+            }
+        """)
+        else:
+            print("else")
+            QApplication.instance().setStyleSheet("""
+            QMainWindow, QWidget {
+                background: #0f0f0f;
+                color: #f3f3f3;
+            }
+
+            QLineEdit, QComboBox {
+                background: #202020;
+                border: 1px solid #3a3a3a;
+                border-radius: 5px;
+                color: #f3f3f3;
+                padding: 3px 6px;
+            }
+
+            QPushButton {
+                background: #2a2a2a;
+                border: 1px solid #3a3a3a;
+                border-radius: 5px;
+                color: #f3f3f3;
+                padding: 3px 6px;
+            }
+        """)
+
     def ui(self):
 
         # Central Widget & Vertical & Horizontal Layouts
