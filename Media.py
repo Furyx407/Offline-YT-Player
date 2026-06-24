@@ -12,7 +12,7 @@ import os
 # PyQt6
 THMBNLW = 240
 THMBNLH = 135
-IMGE = {".png", ".jpg", ".jpeg",".webp"}
+IMGE = {".png", ".jpg", ".jpeg",".webp",".heic"}
 VIDE = {".mp4", ".mkv", ".webm", ".mov", ".avi"}
 THS = QSize(THMBNLW, THMBNLH)
 CrdW = 250
@@ -85,7 +85,7 @@ class QToggle(QCheckBox):
     def paintEvent(self, event):
         pntr = QPainter(self)
         pntr.setRenderHint(QPainter.RenderHint.Antialiasing)
-
+    
         bg = QColor("#33739d") if self.isChecked() else QColor("#444")
         pntr.setBrush(bg)
         pntr.setPen(Qt.PenStyle.NoPen)
@@ -116,6 +116,8 @@ class VidWindow(QWidget):
         self.hvl = QHBoxLayout()
         #Volume 
         self.vll = QHBoxLayout()
+        # Layout for alignment of 1 widget
+        self.ttltmv = QVBoxLayout()
         
         
         self.mvl.setContentsMargins(8,2,8,2)
@@ -130,13 +132,16 @@ class VidWindow(QWidget):
         self.btn()
 
         self.hvl.addStretch()
+        self.hvl.addStretch()
         self.hvl.addWidget(self.sbd)
         self.hvl.addWidget(self.pbt)
         self.hvl.addWidget(self.sfd)
+        self.hvl.addStretch()
+        self.hvl.addWidget(self.pbs)
+
         self.hvl.addLayout(self.vll)
 
         self.vll.setSpacing(5)
-        self.vll.addStretch()
         self.vll.addWidget(self.vlb)
         self.vll.addWidget(self.vls)
         self.vll.addWidget(self.vl)
@@ -176,12 +181,14 @@ class VidWindow(QWidget):
             QSizePolicy.Policy.Fixed)
         self.thvl.addWidget(self.timslid)
 
-        self.ttltim = QLabel("0:00")
+        self.ttltim = QPushButton("0:00")
         self.ttltim.setMinimumSize(80,0)
         self.ttltim.setFixedWidth(55)
-        self.ttltim.setAlignment(Qt.AlignmentFlag.AlignCenter)
-        self.thvl.addWidget(self.ttltim)
+        self.ttltim.clicked.connect(self.tt)
+        self.ttltim.setMinimumWidth(65)
+        self.thvl.addWidget(self.ttltim, alignment=Qt.AlignmentFlag.AlignCenter)
         
+
         self.player.positionChanged.connect(self.vpos)
         self.player.durationChanged.connect(self.vdur)
         self.timslid.sliderMoved.connect(self.player.setPosition)
@@ -227,6 +234,21 @@ class VidWindow(QWidget):
         self.vls.hide()
         self.vls.setRange(0,100)
         self.vls.sliderMoved.connect(self.volc)
+
+        self.pbs = QComboBox()
+        self.pbs.addItems(["0.25x","0.5x","0.75x","1x","1.25x","1.5x","1.75x","2x","3x","4x","5x","6x","7x","8x"])
+        self.pbs.setCurrentIndex(3)
+        self.pbs.currentIndexChanged.connect(self.plbs)
+
+    def plbs(self, index):
+        indx = index
+        print(indx)
+        if int(indx) <= 7:
+            self.player.setPlaybackRate(float(indx / float(4) + 0.25))
+            print(float(int(indx) / float(4) + 0.25))
+        else:
+            self.player.setPlaybackRate(int(indx - 5))
+            print(int(indx - 5))
 
     # Volume slider changed
     def volc(self):
@@ -361,6 +383,16 @@ class VidWindow(QWidget):
             self.vlb.setIcon(self.style().standardIcon(QStyle.StandardPixmap.SP_MediaVolumeMuted))
         else:
             self.vlb.setIcon(self.style().standardIcon(QStyle.StandardPixmap.SP_MediaVolume))
+
+    def tt(self):
+        ttr = self.mw.DOTTD
+        if ttr == False:
+            ttr = True
+
+        else:
+            ttr = False
+
+        self.mw.ttdd(ttr)
 
 # HLP SETTINGS WINDOW
 class STTNG(QWidget):
@@ -858,7 +890,6 @@ class MW(QMainWindow):
         self.plyr.setSource(QUrl.fromLocalFile(vp))
         self.vid.efs()
         self.plyr.play()
-
 
 
 app = QApplication([])
