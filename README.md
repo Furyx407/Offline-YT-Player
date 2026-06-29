@@ -7,8 +7,11 @@ An offline media player that displays thumbnails and title.
 
 
 Supported Video types:
+
  mp4, .mkv, .webm, .mov, .avi
+ 
 Supported Image types:
+
  .png, .jpg, .jpeg, .webp, .heic 
 
 # Requirements:
@@ -19,8 +22,11 @@ Download Media.py OR Media (for linux)
 
 # How to use:
 PYTHON FILE:
+
  run `python Media.py` or `python3 Media.py` in terminal (or equivalent for your OS) 
+ 
 EXECUTABLE:
+
  run it as an executable
 
 # Software used:
