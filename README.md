@@ -1,5 +1,5 @@
 # Offline-YT-Player
-[hackatime badge](https://hackatime.hackclub.com/api/v1/badge/U0BBCS6KN00/Furyx407/Offline-YT-Player)
+![hackatime badge](https://hackatime.hackclub.com/api/v1/badge/U0BBCS6KN00/Furyx407/Offline-YT-Player)
 
 An offline media player that displays thumbnails and title.
 ![alt text](image.png)
