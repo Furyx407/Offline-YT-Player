@@ -16,13 +16,13 @@ IMGE = {".png", ".jpg", ".jpeg",".webp",".heic"}
 VIDE = {".mp4", ".mkv", ".webm", ".mov", ".avi"}
 THS = QSize(THMBNLW, THMBNLH)
 CrdW = 250
-
 #Thumbnail Cards
 class TC(QFrame):
-    def __init__(self, imgp):
+    def __init__(self, imgp, THS):
         super().__init__()
         self.imgp = imgp
-        self.setFixedWidth(CrdW)
+        self.THS = THS
+        self.setFixedWidth(self.THS.width() + 20)
         self.setSizePolicy(QSizePolicy.Policy.Fixed, QSizePolicy.Policy.Fixed)
         
         lyt = QVBoxLayout(self)
@@ -31,7 +31,7 @@ class TC(QFrame):
 
         self.thmbnl = QLabel()
         self.thmbnl.setObjectName("thmbnail")
-        self.thmbnl.setFixedSize(THS)
+        self.thmbnl.setFixedSize(self.THS)
         self.thmbnl.setAlignment(Qt.AlignmentFlag.AlignCenter)
 
         #NM = NAME, removes extra part from " - [" onwards MAKE TOGGLEABLE
@@ -164,7 +164,7 @@ class VidWindow(QWidget):
         self.sfd.setFocusPolicy(Qt.FocusPolicy.NoFocus)
         self.timslid.setFocusPolicy(Qt.FocusPolicy.NoFocus)
         self.pbt.setFocusPolicy(Qt.FocusPolicy.NoFocus)
-
+        self.pbs.setFocusPolicy(Qt.FocusPolicy.NoFocus)
 
     def plt(self):
         self.curtim = QLabel("0:00")
@@ -242,20 +242,15 @@ class VidWindow(QWidget):
 
     def plbs(self, index):
         indx = index
-        print(indx)
         if int(indx) <= 7:
             self.player.setPlaybackRate(float(indx / float(4) + 0.25))
-            print(float(int(indx) / float(4) + 0.25))
         else:
             self.player.setPlaybackRate(int(indx - 5))
-            print(int(indx - 5))
 
     # Volume slider changed
     def volc(self):
         self.vol = self.vls.sliderPosition()
-        print(self.vol)
         self.vol = self.vol / float(100)
-        print(self.vol)
         self.aud.setVolume(self.vol)
         self.moum()
         self.vl.setText(f"{int(self.vol * 100)}%")
@@ -267,7 +262,7 @@ class VidWindow(QWidget):
         else:
             self.vls.hide()
 
-    # Find Time in Hours, Minutes and Seconds
+    # Find Time in Hours (if applicable), Minutes and Seconds
     def fmt(self,ms):
         sectim = ms // 1000
         mintim = sectim // 60
@@ -319,10 +314,8 @@ class VidWindow(QWidget):
         elif event.key() == Qt.Key.Key_Up or event.key() == Qt.Key.Key_Down:
             if event.key() == Qt.Key.Key_Up:
                 self.vol = round(min(self.vol + 0.05, 1.0), 2)
-                print(self.vol)
             else:
                 self.vol = round(max(self.vol - 0.05,0.0),2)
-                print(self.vol)
             self.moum()
             self.vl.setText(f"{int(self.vol * 100)}%")
 
@@ -400,9 +393,13 @@ class STTNG(QWidget):
         super().__init__()
         self.setGeometry(500,250,900,600)
         self.mw = main_window
+        self.THMBNLW = int(self.mw.settings.value("Thumbnail_Width"))
+        self.THMBNLH = int(self.mw.settings.value("Thumbnail_Height"))
+
         cw = QWidget(self)
         VL = QVBoxLayout(cw)
         STNGLBL = QLabel("SETTINGS")
+        
 
         # General eg.colour
         GL = QVBoxLayout()
@@ -427,6 +424,56 @@ class STTNG(QWidget):
         self.ttd.toggled.connect(self.ttdc)
         TTDL = QLabel("Duration or Time till done")
 
+        # Thumbnail
+        THML = QVBoxLayout()
+        T3 = QHBoxLayout()
+        T4 = QHBoxLayout()
+        thml = QLabel("Thumbnails")
+        THWL = QLabel("  Width")
+        BX1 = QPushButton()
+        BX1.setText("-")
+        BX1.clicked.connect(self.DW)
+        BX1.setMaximumSize(30,30)
+        self.XL = QTextEdit(str(self.THMBNLW))
+        self.XL.setMaximumSize(100,30)
+        BX2 = QPushButton()
+        BX2.setText("+")
+        BX2.clicked.connect(self.IW)
+        BX2.setMaximumSize(30,30)
+
+        THHL = QLabel("  Height")
+        BY1 = QPushButton()
+        BY1.setText("-")
+        BY1.clicked.connect(self.DH)
+        BY1.setMaximumSize(30,30)
+        self.YL = QTextEdit(str(self.THMBNLH))
+        self.YL.setMaximumSize(100,30)
+        BY2 = QPushButton()
+        BY2.setText("+")
+        BY2.clicked.connect(self.IH)
+        BY2.setMaximumSize(30,30)
+
+        rset = QPushButton()
+        rset.setText("RESET")
+        rset.clicked.connect(self.rst)
+
+        T3.addWidget(BX1)
+        T3.addWidget(self.XL)
+        T3.addWidget(BX2)
+
+        T4.addWidget(BY1)
+        T4.addWidget(self.YL)
+        T4.addWidget(BY2)
+
+        THML.addWidget(thml)
+        THML.addWidget(THWL)
+        THML.addLayout(T3)
+        THML.addSpacing(3)
+        THML.addWidget(THHL)
+        THML.addLayout(T4)
+        THML.addWidget(rset)
+
+
         T2.addWidget(self.ttd)
         T2.addWidget(TTDL)
         VDL.addWidget(VDLL)
@@ -436,14 +483,58 @@ class STTNG(QWidget):
         VL.addLayout(GL)
         VL.addSpacing(6)
         VL.addLayout(VDL)
+        VL.addSpacing(6)
+        VL.addLayout(THML)
     
+    def rst(self):
+        self.THMBNLW = 240
+        self.THMBNLH = 150
+        self.XL.setText(str(self.THMBNLW))
+        self.YL.setText(str(self.THMBNLH))
+        self.mw.THMBNLW = self.THMBNLW
+        self.mw.THMBNLH = self.THMBNLH
+        self.mw.THS = QSize(int(self.THMBNLW), int(self.THMBNLH))
+        self.mw.chngw(self.THMBNLW)
+        self.mw.chngh(self.THMBNLH)
+        self.mw.ppg()
+
+    def DW(self):
+        self.THMBNLW -= 10
+        self.XL.setText(str(self.THMBNLW))
+        self.mw.chngw(self.THMBNLW)
+        self.mw.THMBNLW = self.THMBNLW
+        self.mw.THS = QSize(int(self.THMBNLW), int(self.THMBNLH))
+        self.mw.ppg()
+
+    def IW(self):
+        self.THMBNLW += 10
+        self.XL.setText(str(self.THMBNLW))
+        self.mw.chngw(self.THMBNLW)
+        self.mw.THMBNLW = self.THMBNLW
+        self.mw.THS = QSize(int(self.THMBNLW), int(self.THMBNLH))
+        self.mw.ppg()
+
+    def DH(self):
+        self.THMBNLH -= 10
+        self.YL.setText(str(self.THMBNLH))
+        self.mw.chngh(self.THMBNLH)
+        self.mw.THMBNLH = self.THMBNLH
+        self.mw.THS = QSize(int(self.THMBNLW), int(self.THMBNLH))
+        self.mw.ppg()
+
+    def IH(self):
+        self.THMBNLH += 10
+        self.YL.setText(str(self.THMBNLH))
+        self.mw.chngh(self.THMBNLH)
+        self.mw.THMBNLH = self.THMBNLH
+        self.mw.THS = QSize(int(self.THMBNLW), int(self.THMBNLH))
+        self.mw.ppg()
+
     # Change LM.toggled.connect(self.slm) to LM.toggled.connect(self.mw.sl()) when done and delete slm
     def slm(self, checked):
-        print("Light Mode set" if checked else "Dark Mode")
         self.mw.sl(checked)
 
-    def ttdc(self, checked):
-        print("TTD" if checked else "DUR")    
+    def ttdc(self, checked):  
         self.mw.ttdd(checked)
 
 
@@ -456,8 +547,13 @@ class MW(QMainWindow):
         self.settings = QSettings("OfflineYTPlayer", "MediaPlayer")
         self.limod = self.settings.value("light_mode", False, type=bool)
         self.DOTTD = self.settings.value("Duration_OR_TIME_TILL_DONE", False, type=bool)
+        self.THMW = self.settings.value("Thumbnail_Width", False, type=int)
+        self.THMH = self.settings.value("Thumbnail_Height", False, type=int)
         self.imgps = []
-
+        self.settings.setValue("Thumbnail_Height", 150)
+        THMBNLW = self.settings.value("Thumbnail_Width")
+        THMBNLH = self.settings.value("Thumbnail_Height")
+        self.THS = QSize(int(THMBNLW), int(THMBNLH))
         self.setWindowTitle("Media Library")
         self.setGeometry(100, 100, 900, 600)
         self.setStatusBar(QStatusBar(self))
@@ -525,12 +621,11 @@ class MW(QMainWindow):
         self.lodfold()
         # Propagate previews
         self.ppg()
-
+    
     def sl(self, checked):
         self.limod = checked
         self.settings.setValue("light_mode", checked)
         if checked:
-            print("checked")
             QApplication.instance().setStyleSheet("""
                 QMainWindow, QWidget {
                     background: #f3f3f3;
@@ -584,7 +679,6 @@ class MW(QMainWindow):
                 }
         """)
         else:
-            print("else")
             QApplication.instance().setStyleSheet("""
             QMainWindow, QWidget {
                 background: #0f0f0f;
@@ -626,6 +720,14 @@ class MW(QMainWindow):
             }
         """)
     
+    def chngw(self, Width):
+        W = Width
+        self.settings.setValue("Thumbnail_Width", W)
+        
+    def chngh(self, Height):
+        H = Height
+        self.settings.setValue("Thumbnail_Height", H)
+
     def ttdd(self,checked):
         self.DOTTD = checked
         self.settings.setValue("Duration_OR_TIME_TILL_DONE", checked)
@@ -859,7 +961,7 @@ class MW(QMainWindow):
         for index, imgp in enumerate(vi):
             r = index // cols
             col = index % cols
-            crd = TC(imgp)
+            crd = TC(imgp, self.THS)
             crd.clcked.connect(self.pvfi)
             self.gl.addWidget(crd, r, col)
 
@@ -893,7 +995,7 @@ class MW(QMainWindow):
 
 
 app = QApplication([])
-
+base = app.style()
 mdpl = MW()
 mdpl.show()
 app.exec()
